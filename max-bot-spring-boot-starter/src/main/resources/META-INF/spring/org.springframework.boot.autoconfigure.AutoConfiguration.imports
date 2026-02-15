@@ -1,1 +1,2 @@
 io.github.astahovtech.maxbot.starter.MaxBotAutoConfiguration
+io.github.astahovtech.maxbot.starter.MaxBotHandlersAutoConfiguration

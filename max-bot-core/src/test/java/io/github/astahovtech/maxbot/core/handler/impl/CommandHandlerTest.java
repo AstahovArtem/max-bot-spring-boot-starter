@@ -14,30 +14,30 @@ class CommandHandlerTest {
     @Test
     void supportsExactCommand() {
         var handler = new CommandHandler("start", ctx -> {});
-        assertTrue(handler.supports(new Update(1L, "/start")));
+        assertTrue(handler.supports(new Update(1L, "/start", null)));
     }
 
     @Test
     void supportsCommandWithArgs() {
         var handler = new CommandHandler("start", ctx -> {});
-        assertTrue(handler.supports(new Update(1L, "/start 123")));
+        assertTrue(handler.supports(new Update(1L, "/start 123", null)));
     }
 
     @Test
     void doesNotSupportDifferentCommand() {
         var handler = new CommandHandler("start", ctx -> {});
-        assertFalse(handler.supports(new Update(1L, "/help")));
+        assertFalse(handler.supports(new Update(1L, "/help", null)));
     }
 
     @Test
     void doesNotSupportNullText() {
         var handler = new CommandHandler("start", ctx -> {});
-        assertFalse(handler.supports(new Update(1L, null)));
+        assertFalse(handler.supports(new Update(1L, null, null)));
     }
 
     @Test
     void normalizesLeadingSlashInConstructor() {
         var handler = new CommandHandler("/start", ctx -> {});
-        assertTrue(handler.supports(new Update(1L, "/start")));
+        assertTrue(handler.supports(new Update(1L, "/start", null)));
     }
 }
