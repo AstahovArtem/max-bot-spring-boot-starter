@@ -1,38 +1,33 @@
 plugins {
-    java
-    id("org.springframework.boot") version "3.5.10"
-    id("io.spring.dependency-management") version "1.1.7"
+    id("org.springframework.boot") version "3.5.10" apply false
+    id("io.spring.dependency-management") version "1.1.6" apply false
 }
 
-group = "io.github.astahovtech"
-version = "0.0.1-SNAPSHOT"
-description = "max-bot-spring-boot-starter"
+allprojects {
+    group = "io.github.astahovtech"
+    version = "0.1.0-SNAPSHOT"
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+    repositories {
+        mavenCentral()
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+subprojects {
+    plugins.withId("java") {
+        extensions.configure<JavaPluginExtension> {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+            withJavadocJar()
+            withSourcesJar()
+        }
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+    }
 
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter")
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    annotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
 }
