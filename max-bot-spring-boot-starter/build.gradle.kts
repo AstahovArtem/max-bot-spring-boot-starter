@@ -4,6 +4,8 @@ plugins {
 }
 
 dependencies {
+    api(project(":max-bot-core"))
+
     implementation("org.springframework.boot:spring-boot-autoconfigure")
     implementation("org.springframework.boot:spring-boot-starter")
 
