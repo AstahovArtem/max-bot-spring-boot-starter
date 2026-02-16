@@ -35,6 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Gradle properties (may contain secrets) ###
+gradle.properties
 # Compiled class file
 *.class
 
