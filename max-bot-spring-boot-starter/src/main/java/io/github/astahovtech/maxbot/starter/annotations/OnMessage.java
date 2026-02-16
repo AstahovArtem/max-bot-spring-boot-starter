@@ -11,5 +11,7 @@ public @interface OnMessage {
 
     String textRegex();
 
+    String state() default "";
+
     int order() default 0;
 }

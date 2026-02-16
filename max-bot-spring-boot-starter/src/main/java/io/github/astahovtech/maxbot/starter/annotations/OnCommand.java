@@ -11,5 +11,7 @@ public @interface OnCommand {
 
     String value();
 
+    String state() default "";
+
     int order() default 0;
 }

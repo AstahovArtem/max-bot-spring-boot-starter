@@ -10,15 +10,22 @@ import io.github.astahovtech.maxbot.core.model.BotChatMember;
 import io.github.astahovtech.maxbot.core.model.BotUser;
 import io.github.astahovtech.maxbot.core.model.Update;
 import io.github.astahovtech.maxbot.core.outgoing.OutgoingMessage;
+import io.github.astahovtech.maxbot.core.state.StateStore;
 
 public final class Ctx {
 
     private final MaxApi api;
     private final Update update;
+    private final StateStore stateStore;
 
     public Ctx(MaxApi api, Update update) {
+        this(api, update, null);
+    }
+
+    public Ctx(MaxApi api, Update update, StateStore stateStore) {
         this.api = api;
         this.update = update;
+        this.stateStore = stateStore;
     }
 
     public MaxApi api() {
@@ -57,6 +64,22 @@ public final class Ctx {
         return update.payload();
     }
 
+    // --- State management ---
+
+    public String state() {
+        return stateStore != null ? stateStore.getState(chatId()) : null;
+    }
+
+    public void setState(String state) {
+        requireStateStore().setState(chatId(), state);
+    }
+
+    public void clearState() {
+        requireStateStore().clearState(chatId());
+    }
+
+    // --- Reply ---
+
     public void reply(String text) {
         api.sendMessage(update.chatId(), text);
     }
@@ -85,6 +108,8 @@ public final class Ctx {
         api.answerCallback(requireCallbackId(), message);
     }
 
+    // --- Chat ---
+
     public BotChat getChat() {
         return api.getChat(update.chatId());
     }
@@ -96,6 +121,8 @@ public final class Ctx {
     public void leaveChat() {
         api.leaveChat(update.chatId());
     }
+
+    // --- Upload ---
 
     public String uploadImage(File file) {
         return api.uploadImage(file);
@@ -118,6 +145,16 @@ public final class Ctx {
         reply(OutgoingMessage.text(text)
                 .attach(Attachment.photo(token))
                 .build());
+    }
+
+    // --- Private ---
+
+    private StateStore requireStateStore() {
+        if (stateStore == null) {
+            throw new IllegalStateException(
+                    "StateStore not configured. Register a StateStore bean to use state management.");
+        }
+        return stateStore;
     }
 
     private String requireMessageId() {

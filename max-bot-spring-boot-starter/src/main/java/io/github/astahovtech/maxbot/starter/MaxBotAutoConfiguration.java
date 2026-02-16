@@ -2,6 +2,7 @@ package io.github.astahovtech.maxbot.starter;
 
 import io.github.astahovtech.maxbot.core.api.MaxApi;
 import io.github.astahovtech.maxbot.core.impl.RuMaxApi;
+import io.github.astahovtech.maxbot.core.retry.RetryPolicy;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -37,8 +38,17 @@ public class MaxBotAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public MaxApi maxApi(MaxBotAPI botApi, ObjectProvider<MaxUploadAPI> uploadApiProvider) {
+    public RetryPolicy retryPolicy() {
+        return RetryPolicy.defaultPolicy();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public MaxApi maxApi(MaxBotAPI botApi,
+                         ObjectProvider<MaxUploadAPI> uploadApiProvider,
+                         ObjectProvider<RetryPolicy> retryPolicyProvider) {
         MaxUploadAPI uploadApi = uploadApiProvider.getIfAvailable();
-        return new RuMaxApi(botApi, uploadApi);
+        RetryPolicy retryPolicy = retryPolicyProvider.getIfAvailable(RetryPolicy::defaultPolicy);
+        return new RuMaxApi(botApi, uploadApi, retryPolicy);
     }
 }

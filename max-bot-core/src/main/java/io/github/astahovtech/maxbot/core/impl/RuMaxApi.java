@@ -14,6 +14,7 @@ import io.github.astahovtech.maxbot.core.model.BotChat;
 import io.github.astahovtech.maxbot.core.model.BotChatMember;
 import io.github.astahovtech.maxbot.core.model.BotUser;
 import io.github.astahovtech.maxbot.core.outgoing.OutgoingMessage;
+import io.github.astahovtech.maxbot.core.retry.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.max.botapi.MaxBotAPI;
@@ -49,14 +50,20 @@ public final class RuMaxApi implements MaxApi {
 
     private final MaxBotAPI botApi;
     private final MaxUploadAPI uploadApi;
+    private final RetryPolicy retryPolicy;
 
     public RuMaxApi(MaxBotAPI botApi) {
-        this(botApi, null);
+        this(botApi, null, RetryPolicy.noRetry());
     }
 
     public RuMaxApi(MaxBotAPI botApi, MaxUploadAPI uploadApi) {
+        this(botApi, uploadApi, RetryPolicy.defaultPolicy());
+    }
+
+    public RuMaxApi(MaxBotAPI botApi, MaxUploadAPI uploadApi, RetryPolicy retryPolicy) {
         this.botApi = botApi;
         this.uploadApi = uploadApi;
+        this.retryPolicy = retryPolicy != null ? retryPolicy : RetryPolicy.noRetry();
     }
 
     @Override
@@ -138,49 +145,57 @@ public final class RuMaxApi implements MaxApi {
     @Override
     public String uploadImage(File file) {
         requireUploadApi();
-        try {
-            UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.IMAGE).execute();
-            UploadedInfo info = uploadApi.uploadFile(endpoint.getUrl(), file).execute();
-            return info.getToken();
-        } catch (ClientException | APIException | FileNotFoundException e) {
-            throw new MaxBotException("uploadImage failed", e);
-        }
+        return retryPolicy.execute(() -> {
+            try {
+                UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.IMAGE).execute();
+                UploadedInfo info = uploadApi.uploadFile(endpoint.getUrl(), file).execute();
+                return info.getToken();
+            } catch (ClientException | APIException | FileNotFoundException e) {
+                throw new MaxBotException("uploadImage failed", e);
+            }
+        });
     }
 
     @Override
     public String uploadVideo(File file) {
         requireUploadApi();
-        try {
-            UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.VIDEO).execute();
-            uploadApi.uploadFile(endpoint.getUrl(), file).execute();
-            return endpoint.getToken();
-        } catch (ClientException | APIException | FileNotFoundException e) {
-            throw new MaxBotException("uploadVideo failed", e);
-        }
+        return retryPolicy.execute(() -> {
+            try {
+                UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.VIDEO).execute();
+                uploadApi.uploadFile(endpoint.getUrl(), file).execute();
+                return endpoint.getToken();
+            } catch (ClientException | APIException | FileNotFoundException e) {
+                throw new MaxBotException("uploadVideo failed", e);
+            }
+        });
     }
 
     @Override
     public String uploadAudio(File file) {
         requireUploadApi();
-        try {
-            UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.AUDIO).execute();
-            uploadApi.uploadFile(endpoint.getUrl(), file).execute();
-            return endpoint.getToken();
-        } catch (ClientException | APIException | FileNotFoundException e) {
-            throw new MaxBotException("uploadAudio failed", e);
-        }
+        return retryPolicy.execute(() -> {
+            try {
+                UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.AUDIO).execute();
+                uploadApi.uploadFile(endpoint.getUrl(), file).execute();
+                return endpoint.getToken();
+            } catch (ClientException | APIException | FileNotFoundException e) {
+                throw new MaxBotException("uploadAudio failed", e);
+            }
+        });
     }
 
     @Override
     public String uploadFile(File file) {
         requireUploadApi();
-        try {
-            UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.FILE).execute();
-            UploadedInfo info = uploadApi.uploadFile(endpoint.getUrl(), file).execute();
-            return info.getToken();
-        } catch (ClientException | APIException | FileNotFoundException e) {
-            throw new MaxBotException("uploadFile failed", e);
-        }
+        return retryPolicy.execute(() -> {
+            try {
+                UploadEndpoint endpoint = botApi.getUploadUrl(UploadType.FILE).execute();
+                UploadedInfo info = uploadApi.uploadFile(endpoint.getUrl(), file).execute();
+                return info.getToken();
+            } catch (ClientException | APIException | FileNotFoundException e) {
+                throw new MaxBotException("uploadFile failed", e);
+            }
+        });
     }
 
     @Override

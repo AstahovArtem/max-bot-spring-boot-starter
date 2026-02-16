@@ -8,6 +8,7 @@ import io.github.astahovtech.maxbot.core.handler.Handler;
 import io.github.astahovtech.maxbot.core.interceptor.ErrorHandler;
 import io.github.astahovtech.maxbot.core.interceptor.HandlerInterceptor;
 import io.github.astahovtech.maxbot.core.model.Update;
+import io.github.astahovtech.maxbot.core.state.StateStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,24 +19,33 @@ public final class UpdateDispatcher {
     private final List<Handler> handlers;
     private final List<HandlerInterceptor> interceptors;
     private final ErrorHandler errorHandler;
+    private final StateStore stateStore;
 
     public UpdateDispatcher(List<Handler> handlers) {
-        this(handlers, List.of(), null);
+        this(handlers, List.of(), null, null);
     }
 
     public UpdateDispatcher(List<Handler> handlers,
                             List<HandlerInterceptor> interceptors,
                             ErrorHandler errorHandler) {
+        this(handlers, interceptors, errorHandler, null);
+    }
+
+    public UpdateDispatcher(List<Handler> handlers,
+                            List<HandlerInterceptor> interceptors,
+                            ErrorHandler errorHandler,
+                            StateStore stateStore) {
         if (handlers == null) {
             throw new IllegalArgumentException("handlers must not be null");
         }
         this.handlers = List.copyOf(handlers);
         this.interceptors = interceptors != null ? List.copyOf(interceptors) : List.of();
         this.errorHandler = errorHandler;
+        this.stateStore = stateStore;
     }
 
     public void dispatch(MaxApi api, Update update) {
-        Ctx ctx = new Ctx(api, update);
+        Ctx ctx = new Ctx(api, update, stateStore);
 
         for (HandlerInterceptor interceptor : interceptors) {
             try {

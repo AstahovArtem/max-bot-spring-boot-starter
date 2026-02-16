@@ -2,3 +2,4 @@ io.github.astahovtech.maxbot.starter.MaxBotAutoConfiguration
 io.github.astahovtech.maxbot.starter.MaxBotHandlersAutoConfiguration
 io.github.astahovtech.maxbot.starter.MaxBotAnnotationHandlersAutoConfiguration
 io.github.astahovtech.maxbot.starter.transport.MaxBotTransportAutoConfiguration
+io.github.astahovtech.maxbot.starter.actuator.MaxBotActuatorAutoConfiguration

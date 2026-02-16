@@ -11,5 +11,7 @@ public @interface OnCallback {
 
     String prefix();
 
+    String state() default "";
+
     int order() default 0;
 }
