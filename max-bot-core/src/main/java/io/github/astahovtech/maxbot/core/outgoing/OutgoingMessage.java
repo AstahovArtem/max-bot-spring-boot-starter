@@ -1,6 +1,11 @@
 package io.github.astahovtech.maxbot.core.outgoing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import io.github.astahovtech.maxbot.core.keyboard.InlineKeyboard;
+import io.github.astahovtech.maxbot.core.model.Attachment;
 
 public final class OutgoingMessage {
 
@@ -9,6 +14,7 @@ public final class OutgoingMessage {
     private final Format format;
     private final boolean notify;
     private final String replyToMessageId;
+    private final List<Attachment> attachments;
 
     private OutgoingMessage(Builder builder) {
         this.text = builder.text;
@@ -16,6 +22,9 @@ public final class OutgoingMessage {
         this.format = builder.format;
         this.notify = builder.notify;
         this.replyToMessageId = builder.replyToMessageId;
+        this.attachments = builder.attachments != null
+                ? Collections.unmodifiableList(builder.attachments)
+                : null;
     }
 
     public String text() {
@@ -38,6 +47,10 @@ public final class OutgoingMessage {
         return replyToMessageId;
     }
 
+    public List<Attachment> attachments() {
+        return attachments;
+    }
+
     public static Builder text(String text) {
         return new Builder(text);
     }
@@ -52,6 +65,7 @@ public final class OutgoingMessage {
         private Format format;
         private boolean notify = true;
         private String replyToMessageId;
+        private List<Attachment> attachments;
 
         private Builder(String text) {
             this.text = text;
@@ -84,6 +98,19 @@ public final class OutgoingMessage {
 
         public Builder replyTo(String messageId) {
             this.replyToMessageId = messageId;
+            return this;
+        }
+
+        public Builder attach(Attachment attachment) {
+            if (this.attachments == null) {
+                this.attachments = new ArrayList<>();
+            }
+            this.attachments.add(attachment);
+            return this;
+        }
+
+        public Builder attachments(List<Attachment> attachments) {
+            this.attachments = new ArrayList<>(attachments);
             return this;
         }
 

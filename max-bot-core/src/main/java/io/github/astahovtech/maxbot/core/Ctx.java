@@ -1,6 +1,12 @@
 package io.github.astahovtech.maxbot.core;
 
+import java.io.File;
+import java.util.List;
+
 import io.github.astahovtech.maxbot.core.api.MaxApi;
+import io.github.astahovtech.maxbot.core.model.Attachment;
+import io.github.astahovtech.maxbot.core.model.BotChat;
+import io.github.astahovtech.maxbot.core.model.BotChatMember;
 import io.github.astahovtech.maxbot.core.model.BotUser;
 import io.github.astahovtech.maxbot.core.model.Update;
 import io.github.astahovtech.maxbot.core.outgoing.OutgoingMessage;
@@ -15,12 +21,12 @@ public final class Ctx {
         this.update = update;
     }
 
-    public Update update() {
-        return update;
-    }
-
     public MaxApi api() {
         return api;
+    }
+
+    public Update update() {
+        return update;
     }
 
     public long chatId() {
@@ -39,6 +45,18 @@ public final class Ctx {
         return update.sender();
     }
 
+    public String callbackData() {
+        return update.callbackData();
+    }
+
+    public String callbackId() {
+        return update.callbackId();
+    }
+
+    public String payload() {
+        return update.payload();
+    }
+
     public void reply(String text) {
         api.sendMessage(update.chatId(), text);
     }
@@ -48,39 +66,73 @@ public final class Ctx {
     }
 
     public void editMessage(String text) {
-        requireMessageId();
-        api.editMessage(update.messageId(), text);
+        api.editMessage(requireMessageId(), text);
     }
 
     public void editMessage(OutgoingMessage message) {
-        requireMessageId();
-        api.editMessage(update.messageId(), message);
+        api.editMessage(requireMessageId(), message);
     }
 
     public void deleteMessage() {
-        requireMessageId();
-        api.deleteMessage(update.messageId());
+        api.deleteMessage(requireMessageId());
     }
 
     public void answerCallback(String notification) {
-        requireCallbackId();
-        api.answerCallback(update.callbackId(), notification);
+        api.answerCallback(requireCallbackId(), notification);
     }
 
     public void answerCallbackWithMessage(OutgoingMessage message) {
-        requireCallbackId();
-        api.answerCallback(update.callbackId(), message);
+        api.answerCallback(requireCallbackId(), message);
     }
 
-    private void requireMessageId() {
-        if (update.messageId() == null) {
-            throw new IllegalStateException("No messageId in update");
-        }
+    public BotChat getChat() {
+        return api.getChat(update.chatId());
     }
 
-    private void requireCallbackId() {
-        if (update.callbackId() == null) {
-            throw new IllegalStateException("No callbackId in update");
+    public List<BotChatMember> getChatMembers() {
+        return api.getChatMembers(update.chatId());
+    }
+
+    public void leaveChat() {
+        api.leaveChat(update.chatId());
+    }
+
+    public String uploadImage(File file) {
+        return api.uploadImage(file);
+    }
+
+    public String uploadVideo(File file) {
+        return api.uploadVideo(file);
+    }
+
+    public String uploadAudio(File file) {
+        return api.uploadAudio(file);
+    }
+
+    public String uploadFile(File file) {
+        return api.uploadFile(file);
+    }
+
+    public void replyWithImage(String text, File imageFile) {
+        String token = api.uploadImage(imageFile);
+        reply(OutgoingMessage.text(text)
+                .attach(Attachment.photo(token))
+                .build());
+    }
+
+    private String requireMessageId() {
+        String mid = update.messageId();
+        if (mid == null) {
+            throw new IllegalStateException("messageId is null for update type=" + update.type());
         }
+        return mid;
+    }
+
+    private String requireCallbackId() {
+        String cbId = update.callbackId();
+        if (cbId == null) {
+            throw new IllegalStateException("callbackId is null for update type=" + update.type());
+        }
+        return cbId;
     }
 }

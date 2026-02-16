@@ -16,11 +16,20 @@ import io.github.astahovtech.maxbot.core.handler.impl.BotStartedHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.CallbackHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.CommandHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.MessageHandler;
+import io.github.astahovtech.maxbot.core.handler.impl.UpdateTypeHandler;
+import io.github.astahovtech.maxbot.core.model.UpdateType;
 import io.github.astahovtech.maxbot.starter.annotations.MaxBot;
+import io.github.astahovtech.maxbot.starter.annotations.OnBotAdded;
+import io.github.astahovtech.maxbot.starter.annotations.OnBotRemoved;
 import io.github.astahovtech.maxbot.starter.annotations.OnBotStarted;
 import io.github.astahovtech.maxbot.starter.annotations.OnCallback;
+import io.github.astahovtech.maxbot.starter.annotations.OnChatTitleChanged;
 import io.github.astahovtech.maxbot.starter.annotations.OnCommand;
 import io.github.astahovtech.maxbot.starter.annotations.OnMessage;
+import io.github.astahovtech.maxbot.starter.annotations.OnMessageEdited;
+import io.github.astahovtech.maxbot.starter.annotations.OnMessageRemoved;
+import io.github.astahovtech.maxbot.starter.annotations.OnUserAdded;
+import io.github.astahovtech.maxbot.starter.annotations.OnUserRemoved;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -74,39 +83,85 @@ public class MaxBotHandlerRegistrar implements BeanDefinitionRegistryPostProcess
             OnMessage onMessage = method.getAnnotation(OnMessage.class);
             OnCallback onCallback = method.getAnnotation(OnCallback.class);
             OnBotStarted onBotStarted = method.getAnnotation(OnBotStarted.class);
+            OnBotAdded onBotAdded = method.getAnnotation(OnBotAdded.class);
+            OnBotRemoved onBotRemoved = method.getAnnotation(OnBotRemoved.class);
+            OnMessageEdited onMessageEdited = method.getAnnotation(OnMessageEdited.class);
+            OnMessageRemoved onMessageRemoved = method.getAnnotation(OnMessageRemoved.class);
+            OnUserAdded onUserAdded = method.getAnnotation(OnUserAdded.class);
+            OnUserRemoved onUserRemoved = method.getAnnotation(OnUserRemoved.class);
+            OnChatTitleChanged onChatTitleChanged = method.getAnnotation(OnChatTitleChanged.class);
 
-            if (onCommand == null && onMessage == null && onCallback == null && onBotStarted == null) {
+            if (onCommand == null && onMessage == null && onCallback == null
+                    && onBotStarted == null && onBotAdded == null && onBotRemoved == null
+                    && onMessageEdited == null && onMessageRemoved == null
+                    && onUserAdded == null && onUserRemoved == null && onChatTitleChanged == null) {
                 continue;
             }
 
             HandlerMethodValidator.validate(method);
             method.setAccessible(true);
 
+            Consumer<Ctx> action = action(beanFactory, beanName, beanClass, method);
+
             if (onCommand != null) {
-                descriptors.add(new HandlerDescriptor(
-                        beanClass.getSimpleName(), method.getName(), onCommand.order(), "OnCommand",
-                        CommandHandler.class,
-                        () -> new CommandHandler(onCommand.value(), action(beanFactory, beanName, beanClass, method))));
+                descriptors.add(descriptor(beanClass, method, onCommand.order(), "OnCommand",
+                        CommandHandler.class, () -> new CommandHandler(onCommand.value(), action)));
             }
             if (onMessage != null) {
-                descriptors.add(new HandlerDescriptor(
-                        beanClass.getSimpleName(), method.getName(), onMessage.order(), "OnMessage",
-                        MessageHandler.class,
-                        () -> new MessageHandler(onMessage.textRegex(), action(beanFactory, beanName, beanClass, method))));
+                descriptors.add(descriptor(beanClass, method, onMessage.order(), "OnMessage",
+                        MessageHandler.class, () -> new MessageHandler(onMessage.textRegex(), action)));
             }
             if (onCallback != null) {
-                descriptors.add(new HandlerDescriptor(
-                        beanClass.getSimpleName(), method.getName(), onCallback.order(), "OnCallback",
-                        CallbackHandler.class,
-                        () -> new CallbackHandler(onCallback.prefix(), action(beanFactory, beanName, beanClass, method))));
+                descriptors.add(descriptor(beanClass, method, onCallback.order(), "OnCallback",
+                        CallbackHandler.class, () -> new CallbackHandler(onCallback.prefix(), action)));
             }
             if (onBotStarted != null) {
-                descriptors.add(new HandlerDescriptor(
-                        beanClass.getSimpleName(), method.getName(), onBotStarted.order(), "OnBotStarted",
-                        BotStartedHandler.class,
-                        () -> new BotStartedHandler(action(beanFactory, beanName, beanClass, method))));
+                descriptors.add(descriptor(beanClass, method, onBotStarted.order(), "OnBotStarted",
+                        BotStartedHandler.class, () -> new BotStartedHandler(action)));
+            }
+            if (onBotAdded != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onBotAdded.order(),
+                        "OnBotAdded", UpdateType.BOT_ADDED, action));
+            }
+            if (onBotRemoved != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onBotRemoved.order(),
+                        "OnBotRemoved", UpdateType.BOT_REMOVED, action));
+            }
+            if (onMessageEdited != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onMessageEdited.order(),
+                        "OnMessageEdited", UpdateType.MESSAGE_EDITED, action));
+            }
+            if (onMessageRemoved != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onMessageRemoved.order(),
+                        "OnMessageRemoved", UpdateType.MESSAGE_REMOVED, action));
+            }
+            if (onUserAdded != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onUserAdded.order(),
+                        "OnUserAdded", UpdateType.USER_ADDED, action));
+            }
+            if (onUserRemoved != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onUserRemoved.order(),
+                        "OnUserRemoved", UpdateType.USER_REMOVED, action));
+            }
+            if (onChatTitleChanged != null) {
+                descriptors.add(typeDescriptor(beanClass, method, onChatTitleChanged.order(),
+                        "OnChatTitleChanged", UpdateType.CHAT_TITLE_CHANGED, action));
             }
         }
+    }
+
+    private HandlerDescriptor typeDescriptor(Class<?> beanClass, Method method, int order,
+                                             String annotationType, UpdateType updateType,
+                                             Consumer<Ctx> action) {
+        return descriptor(beanClass, method, order, annotationType,
+                UpdateTypeHandler.class, () -> new UpdateTypeHandler(updateType, action));
+    }
+
+    private HandlerDescriptor descriptor(Class<?> beanClass, Method method, int order,
+                                         String annotationType, Class<? extends Handler> handlerType,
+                                         Supplier<Handler> factory) {
+        return new HandlerDescriptor(beanClass.getSimpleName(), method.getName(),
+                order, annotationType, handlerType, factory);
     }
 
     private Consumer<Ctx> action(BeanFactory beanFactory, String beanName, Class<?> beanClass, Method method) {

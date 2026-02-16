@@ -1,11 +1,14 @@
 package io.github.astahovtech.maxbot.starter;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.github.astahovtech.maxbot.core.Ctx;
 import io.github.astahovtech.maxbot.core.api.MaxApi;
 import io.github.astahovtech.maxbot.core.dispatcher.UpdateDispatcher;
+import io.github.astahovtech.maxbot.core.model.BotChat;
+import io.github.astahovtech.maxbot.core.model.BotChatMember;
 import io.github.astahovtech.maxbot.core.model.BotUser;
 import io.github.astahovtech.maxbot.core.model.Update;
 import io.github.astahovtech.maxbot.core.outgoing.OutgoingMessage;
@@ -120,6 +123,40 @@ class MaxBotAnnotationHandlersTest {
         @Override
         public BotUser getMe() {
             return new BotUser(0L, "TestBot", null, "test_bot", true);
+        }
+
+        @Override
+        public String uploadImage(File file) {
+            return "img-token";
+        }
+
+        @Override
+        public String uploadVideo(File file) {
+            return "vid-token";
+        }
+
+        @Override
+        public String uploadAudio(File file) {
+            return "aud-token";
+        }
+
+        @Override
+        public String uploadFile(File file) {
+            return "file-token";
+        }
+
+        @Override
+        public BotChat getChat(long chatId) {
+            return new BotChat(chatId, "chat", "active", "Test", null, 2, false, null, null);
+        }
+
+        @Override
+        public List<BotChatMember> getChatMembers(long chatId) {
+            return List.of();
+        }
+
+        @Override
+        public void leaveChat(long chatId) {
         }
     }
 }

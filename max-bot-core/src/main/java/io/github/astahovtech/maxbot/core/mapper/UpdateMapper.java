@@ -65,50 +65,79 @@ public final class UpdateMapper {
 
             @Override
             public Update map(MessageEditedUpdate u) {
-                return new Update(UpdateType.MESSAGE_EDITED, 0L, null, null,
-                        null, null, null, u.getTimestamp(), null, null);
+                Message msg = u.getMessage();
+                return Update.ofMessageEdited(
+                        extractChatId(msg),
+                        extractMid(msg),
+                        extractText(msg),
+                        mapUser(msg.getSender()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(MessageRemovedUpdate u) {
-                return new Update(UpdateType.MESSAGE_REMOVED, 0L, null, null,
-                        null, null, null, u.getTimestamp(), null, null);
+                return Update.ofMessageRemoved(
+                        u.getChatId(),
+                        u.getMessageId(),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(BotAddedToChatUpdate u) {
-                return new Update(UpdateType.BOT_ADDED, u.getChatId(), null, null,
-                        null, null, mapUser(u.getUser()), u.getTimestamp(), null, null);
+                return Update.ofBotAdded(
+                        u.getChatId(),
+                        mapUser(u.getUser()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(BotRemovedFromChatUpdate u) {
-                return new Update(UpdateType.BOT_REMOVED, u.getChatId(), null, null,
-                        null, null, mapUser(u.getUser()), u.getTimestamp(), null, null);
+                return Update.ofBotRemoved(
+                        u.getChatId(),
+                        mapUser(u.getUser()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(UserAddedToChatUpdate u) {
-                return new Update(UpdateType.USER_ADDED, u.getChatId(), null, null,
-                        null, null, mapUser(u.getUser()), u.getTimestamp(), null, null);
+                return Update.ofUserAdded(
+                        u.getChatId(),
+                        mapUser(u.getUser()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(UserRemovedFromChatUpdate u) {
-                return new Update(UpdateType.USER_REMOVED, u.getChatId(), null, null,
-                        null, null, mapUser(u.getUser()), u.getTimestamp(), null, null);
+                return Update.ofUserRemoved(
+                        u.getChatId(),
+                        mapUser(u.getUser()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(ChatTitleChangedUpdate u) {
-                return new Update(UpdateType.CHAT_TITLE_CHANGED, u.getChatId(), null, null,
-                        null, null, mapUser(u.getUser()), u.getTimestamp(), null, null);
+                return Update.ofChatTitleChanged(
+                        u.getChatId(),
+                        u.getTitle(),
+                        mapUser(u.getUser()),
+                        u.getTimestamp()
+                );
             }
 
             @Override
             public Update map(MessageChatCreatedUpdate u) {
-                return new Update(UpdateType.MESSAGE_CHAT_CREATED, 0L, null, null,
-                        null, null, null, u.getTimestamp(), null, null);
+                return Update.ofMessageChatCreated(
+                        u.getChat().getChatId(),
+                        u.getMessageId(),
+                        u.getTimestamp(),
+                        u.getStartPayload()
+                );
             }
 
             @Override
