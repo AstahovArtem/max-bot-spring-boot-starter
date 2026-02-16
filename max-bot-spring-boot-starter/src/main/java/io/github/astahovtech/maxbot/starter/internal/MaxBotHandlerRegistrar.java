@@ -12,10 +12,12 @@ import java.util.function.Supplier;
 
 import io.github.astahovtech.maxbot.core.Ctx;
 import io.github.astahovtech.maxbot.core.handler.Handler;
+import io.github.astahovtech.maxbot.core.handler.impl.BotStartedHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.CallbackHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.CommandHandler;
 import io.github.astahovtech.maxbot.core.handler.impl.MessageHandler;
 import io.github.astahovtech.maxbot.starter.annotations.MaxBot;
+import io.github.astahovtech.maxbot.starter.annotations.OnBotStarted;
 import io.github.astahovtech.maxbot.starter.annotations.OnCallback;
 import io.github.astahovtech.maxbot.starter.annotations.OnCommand;
 import io.github.astahovtech.maxbot.starter.annotations.OnMessage;
@@ -71,8 +73,9 @@ public class MaxBotHandlerRegistrar implements BeanDefinitionRegistryPostProcess
             OnCommand onCommand = method.getAnnotation(OnCommand.class);
             OnMessage onMessage = method.getAnnotation(OnMessage.class);
             OnCallback onCallback = method.getAnnotation(OnCallback.class);
+            OnBotStarted onBotStarted = method.getAnnotation(OnBotStarted.class);
 
-            if (onCommand == null && onMessage == null && onCallback == null) {
+            if (onCommand == null && onMessage == null && onCallback == null && onBotStarted == null) {
                 continue;
             }
 
@@ -96,6 +99,12 @@ public class MaxBotHandlerRegistrar implements BeanDefinitionRegistryPostProcess
                         beanClass.getSimpleName(), method.getName(), onCallback.order(), "OnCallback",
                         CallbackHandler.class,
                         () -> new CallbackHandler(onCallback.prefix(), action(beanFactory, beanName, beanClass, method))));
+            }
+            if (onBotStarted != null) {
+                descriptors.add(new HandlerDescriptor(
+                        beanClass.getSimpleName(), method.getName(), onBotStarted.order(), "OnBotStarted",
+                        BotStartedHandler.class,
+                        () -> new BotStartedHandler(action(beanFactory, beanName, beanClass, method))));
             }
         }
     }

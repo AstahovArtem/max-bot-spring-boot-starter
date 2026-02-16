@@ -8,6 +8,7 @@ dependencies {
     api(project(":max-bot-core"))
 
     implementation("org.springframework.boot:spring-boot-autoconfigure")
+    compileOnly("org.springframework.boot:spring-boot-starter-web")
     implementation("com.github.max-messenger:max-bot-api-client-java:main")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

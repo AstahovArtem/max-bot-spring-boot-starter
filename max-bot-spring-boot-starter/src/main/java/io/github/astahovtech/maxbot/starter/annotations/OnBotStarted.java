@@ -6,11 +6,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.stereotype.Component;
-
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Component
-public @interface MaxBot {
+public @interface OnBotStarted {
+
+    int order() default 0;
 }

@@ -12,19 +12,19 @@ class CallbackHandlerTest {
     @Test
     void supportsWhenCallbackDataStartsWithPrefix() {
         var handler = new CallbackHandler("pay:", ctx -> {});
-        assertTrue(handler.supports(new Update(1L, null, "pay:123")));
+        assertTrue(handler.supports(Update.of(1L, null, "pay:123")));
     }
 
     @Test
     void doesNotSupportWhenPrefixDifferent() {
         var handler = new CallbackHandler("pay:", ctx -> {});
-        assertFalse(handler.supports(new Update(1L, null, "cancel:456")));
+        assertFalse(handler.supports(Update.of(1L, null, "cancel:456")));
     }
 
     @Test
     void supportsFalseWhenCallbackDataNull() {
         var handler = new CallbackHandler("pay:", ctx -> {});
-        assertFalse(handler.supports(new Update(1L, "hello", null)));
+        assertFalse(handler.supports(Update.of(1L, "hello", null)));
     }
 
     @Test

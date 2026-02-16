@@ -6,8 +6,12 @@ import io.github.astahovtech.maxbot.core.Ctx;
 import io.github.astahovtech.maxbot.core.api.MaxApi;
 import io.github.astahovtech.maxbot.core.handler.Handler;
 import io.github.astahovtech.maxbot.core.model.Update;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class UpdateDispatcher {
+
+    private static final Logger log = LoggerFactory.getLogger(UpdateDispatcher.class);
 
     private final List<Handler> handlers;
 
@@ -22,9 +26,17 @@ public final class UpdateDispatcher {
         Ctx ctx = new Ctx(api, update);
         for (Handler handler : handlers) {
             if (handler.supports(update)) {
-                handler.handle(ctx);
+                log.debug("Dispatching update type={} chatId={} to {}",
+                        update.type(), update.chatId(), handler.getClass().getSimpleName());
+                try {
+                    handler.handle(ctx);
+                } catch (Exception e) {
+                    log.error("Handler {} threw an exception for update type={} chatId={}",
+                            handler.getClass().getSimpleName(), update.type(), update.chatId(), e);
+                }
                 return;
             }
         }
+        log.debug("No handler found for update type={} chatId={}", update.type(), update.chatId());
     }
 }
