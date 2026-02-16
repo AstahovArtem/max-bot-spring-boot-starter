@@ -11,7 +11,7 @@ dependencies {
     compileOnly("org.springframework.boot:spring-boot-starter-web")
     compileOnly("org.springframework.boot:spring-boot-starter-actuator")
     compileOnly("io.micrometer:micrometer-core")
-    implementation("com.github.max-messenger:max-bot-api-client-java:main")
+    implementation("com.github.max-messenger:max-bot-api-client-java:2c2a05e")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
