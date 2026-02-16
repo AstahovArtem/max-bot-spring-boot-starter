@@ -275,4 +275,4 @@ max-bot-spring-boot-starter/
 
 ## Лицензия
 
-MIT
+Apache-2.0 license
