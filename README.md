@@ -1,5 +1,11 @@
 # MAX Bot Spring Boot Starter
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.astahovtech/max-bot-spring-boot-starter)](https://central.sonatype.com/artifact/io.github.astahovtech/max-bot-spring-boot-starter)
+[![License](https://img.shields.io/github/license/AstahovArtem/max-bot-spring-boot-starter)](LICENSE)
+[![CI](https://github.com/AstahovArtem/max-bot-spring-boot-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/AstahovArtem/max-bot-spring-boot-starter/actions/workflows/ci.yml)
+[![Java](https://img.shields.io/badge/Java-21+-blue)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green)](https://spring.io/projects/spring-boot)
+
 Spring Boot стартер для создания ботов в мессенджере [MAX](https://max.ru).  
 Вдохновлён [TelegramBots](https://github.com/rubenlagus/TelegramBots) — простой, декларативный, расширяемый.
 
@@ -24,13 +30,27 @@ Spring Boot стартер для создания ботов в мессенд�
 **Gradle (Kotlin DSL):**
 
 ```kotlin
-repositories {
-    maven("https://jitpack.io")
-}
-
 dependencies {
-    implementation("com.github.astahovtech:max-bot-spring-boot-starter:main-SNAPSHOT")
+    implementation("io.github.astahovtech:max-bot-spring-boot-starter:0.1.0")
 }
+```
+
+**Gradle (Groovy):**
+
+```groovy
+dependencies {
+    implementation 'io.github.astahovtech:max-bot-spring-boot-starter:0.1.0'
+}
+```
+
+**Maven:**
+
+```xml
+<dependency>
+    <groupId>io.github.astahovtech</groupId>
+    <artifactId>max-bot-spring-boot-starter</artifactId>
+    <version>0.1.0</version>
+</dependency>
 ```
 
 ### 2. Настройка `application.yml`
@@ -358,6 +378,12 @@ examples/.../pizza/
 
 Запуск: `MAX_BOT_TOKEN=... ./gradlew :examples:bootRun`
 
+## Требования
+
+- Java 21+
+- Spring Boot 3.x
+- Токен бота MAX (получить на [business.max.ru](https://business.max.ru))
+
 ## Структура проекта
 
 ```
@@ -367,6 +393,14 @@ max-bot-spring-boot-starter/
 └── examples/                    — Примеры ботов
 ```
 
+## Содействие
+
+Нашли баг или есть идея? Создайте [issue](https://github.com/AstahovArtem/max-bot-spring-boot-starter/issues) или отправьте pull request.
+
 ## Лицензия
 
-Apache-2.0
+[Apache-2.0](LICENSE)
+
+---
+
+Разработка ботов для MAX на заказ — Telegram: [@artem_astt](https://t.me/artem_astt)
