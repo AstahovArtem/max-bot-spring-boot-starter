@@ -8,6 +8,7 @@ Spring Boot стартер для создания ботов в мессенд�
 - Декларативные аннотации: `@OnCommand`, `@OnMessage`, `@OnCallback`, `@OnBotStarted` и др.
 - Все типы событий MAX API: сообщения, колбэки, добавление/удаление пользователей и бота, смена названия чата
 - FSM/Conversation — конечный автомат для многошаговых диалогов (`state`)
+- Несколько `@MaxBot`-классов в одном приложении — разбивайте бота по зонам ответственности
 - Загрузка файлов: фото, видео, аудио, документы
 - Inline-клавиатуры с callback- и link-кнопками
 - Chat API: информация о чате, участники, выход
@@ -69,7 +70,7 @@ public class MyBot {
 
 | Аннотация | Описание | Параметры |
 |---|---|---|
-| `@MaxBot` | Помечает класс как бот-обработчик | — |
+| `@MaxBot` | Помечает класс как бот-обработчик (автоматически `@Component`) | — |
 | `@OnCommand("cmd")` | Обработка команды `/cmd` | `value`, `state`, `order` |
 | `@OnMessage(textRegex)` | Обработка сообщений по regex | `textRegex`, `state`, `order` |
 | `@OnCallback(prefix)` | Обработка callback по префиксу | `prefix`, `state`, `order` |
@@ -84,33 +85,86 @@ public class MyBot {
 
 Все handler-методы принимают единственный параметр `Ctx`.
 
+Параметр `order` управляет приоритетом: handler с меньшим значением проверяется первым (по умолчанию `0`).
+
 ## Контекст (Ctx)
 
 ```java
+// --- Данные обновления ---
 ctx.chatId()           // ID чата
-ctx.text()             // Текст сообщения
+ctx.text()             // Текст сообщения (или новое название чата для CHAT_TITLE_CHANGED)
 ctx.sender()           // Отправитель (BotUser)
 ctx.callbackData()     // Данные callback
+ctx.callbackId()       // ID callback (для answerCallback)
 ctx.messageId()        // ID сообщения
+ctx.payload()          // Payload из deep link (для BOT_STARTED)
 
-ctx.reply("text")                     // Отправить текст
-ctx.reply(OutgoingMessage.text("hi")  // Отправить сообщение с клавиатурой
+// --- Ответы ---
+ctx.reply("text")                        // Отправить текст
+ctx.reply(OutgoingMessage.text("hi")     // Отправить сообщение с клавиатурой
     .keyboard(keyboard).build())
-ctx.editMessage("new text")           // Редактировать сообщение
-ctx.deleteMessage()                   // Удалить сообщение
-ctx.answerCallback("ok")              // Ответить на callback
+ctx.editMessage("new text")              // Редактировать сообщение
+ctx.deleteMessage()                      // Удалить сообщение
+ctx.answerCallback("ok")                 // Ответить на callback (уведомление)
+ctx.answerCallbackWithMessage(msg)       // Ответить на callback сообщением
 
-ctx.getChat()                         // Информация о чате
-ctx.getChatMembers()                  // Участники чата
-ctx.leaveChat()                       // Покинуть чат
+// --- Чат ---
+ctx.getChat()                            // Информация о чате (BotChat)
+ctx.getChatMembers()                     // Участники чата (List<BotChatMember>)
+ctx.leaveChat()                          // Покинуть чат
 
-ctx.uploadImage(file)                 // Загрузить изображение → token
-ctx.uploadFile(file)                  // Загрузить файл → token
+// --- Загрузка файлов ---
+ctx.uploadImage(file)                    // Загрузить изображение → token
+ctx.uploadVideo(file)                    // Загрузить видео → token
+ctx.uploadAudio(file)                    // Загрузить аудио → token
+ctx.uploadFile(file)                     // Загрузить файл → token
+ctx.replyWithImage("text", file)         // Загрузить и отправить фото одной строкой
 
-ctx.state()                           // Текущее состояние FSM
-ctx.setState("STEP_2")                // Установить состояние
-ctx.clearState()                      // Очистить состояние
+// --- FSM (состояния) ---
+ctx.state()                              // Текущее состояние (String или null)
+ctx.setState("STEP_2")                   // Установить состояние
+ctx.clearState()                         // Очистить состояние
+
+// --- API напрямую ---
+ctx.api()                                // Доступ к MaxApi для нестандартных операций
 ```
+
+## Несколько `@MaxBot`-классов
+
+Для больших ботов разбивайте логику по нескольким классам. Все handler-ы из всех `@MaxBot`-классов автоматически собираются в единый диспетчер:
+
+```
+bot/
+├── MainMenuBot.java        — /start, /help, главное меню
+├── OrderBot.java           — оформление заказа (FSM)
+├── SettingsBot.java        — настройки
+└── AdminBot.java           — админ-команды
+```
+
+```java
+@MaxBot
+public class MainMenuBot {
+    @OnCommand(value = "start", order = -100)  // проверяется первым
+    public void start(Ctx ctx) { ... }
+}
+
+@MaxBot
+public class OrderBot {
+    private final OrderService orderService;
+
+    public OrderBot(OrderService orderService) {  // Spring DI
+        this.orderService = orderService;
+    }
+
+    @OnCommand("order")
+    public void startOrder(Ctx ctx) { ... }
+
+    @OnMessage(textRegex = ".*", state = "WAITING_PRODUCT")
+    public void receiveProduct(Ctx ctx) { ... }
+}
+```
+
+`@MaxBot`-классы — обычные Spring-компоненты. Можно инжектить любые бины: JPA-репозитории, RestTemplate, Redis, Kafka и т.д.
 
 ## Клавиатуры
 
@@ -154,18 +208,21 @@ public class OrderBot {
 }
 ```
 
-По умолчанию состояния хранятся in-memory. Для кастомного хранилища (Redis, DB) реализуйте `StateStore`:
+Handler без `state` срабатывает **в любом состоянии** (например, `/cancel` для отмены из любого шага).
+
+По умолчанию состояния хранятся in-memory (`InMemoryStateStore`). Для кластера или персистентности реализуйте `StateStore`:
 
 ```java
 @Bean
 public StateStore stateStore(RedisTemplate<String, String> redis) {
-    return new RedisStateStore(redis); // ваша реализация
+    return new RedisStateStore(redis); // ваша реализация — 3 метода
 }
 ```
 
 ## Загрузка файлов
 
 ```java
+// Загрузка + отправка по шагам
 String token = ctx.uploadImage(new File("photo.jpg"));
 ctx.reply(OutgoingMessage.text("Фото:")
     .attach(Attachment.photo(token))
@@ -176,6 +233,15 @@ ctx.replyWithImage("Фото:", new File("photo.jpg"));
 ```
 
 Поддерживаемые типы: `Attachment.photo()`, `Attachment.video()`, `Attachment.audio()`, `Attachment.file()`.
+
+Можно добавить несколько вложений в одно сообщение:
+
+```java
+ctx.reply(OutgoingMessage.text("Документы:")
+    .attach(Attachment.file(token1))
+    .attach(Attachment.file(token2))
+    .build());
+```
 
 ## Interceptors и ErrorHandler
 
@@ -264,15 +330,43 @@ public RetryPolicy retryPolicy() {
 }
 ```
 
+## Примеры
+
+В модуле `examples/` — готовые примеры ботов:
+
+| Пример | Описание |
+|---|---|
+| `ExampleBot` | Простой бот: echo, команды, callback-кнопки |
+| `OrderBot` | FSM-диалог: многошаговый заказ |
+| `pizza/` | **Полноценный бот доставки** — несколько `@MaxBot`-классов, FSM, Spring DI, interceptors, error handler |
+
+### PizzaBot — структура
+
+```
+examples/.../pizza/
+├── bot/
+│   ├── MainMenuBot.java       — /start, /help, каталог, контакты
+│   ├── OrderBot.java          — FSM-заказ: пицца → размер → адрес → подтверждение
+│   └── AdminBot.java          — /stats — статистика заказов
+├── service/
+│   └── OrderService.java      — бизнес-логика заказов (in-memory)
+├── model/
+│   └── OrderDraft.java        — данные заказа + расчёт цены
+└── config/
+    └── BotConfig.java         — ErrorHandler + LoggingInterceptor
+```
+
+Запуск: `MAX_BOT_TOKEN=... ./gradlew :examples:bootRun`
+
 ## Структура проекта
 
 ```
 max-bot-spring-boot-starter/
-├── max-bot-core/              — Ядро: модели, API, handlers, FSM, retry
+├── max-bot-core/                — Ядро: модели, API, handlers, FSM, retry
 ├── max-bot-spring-boot-starter/ — Spring Boot стартер: аннотации, auto-config, actuator
-└── examples/                   — Примеры ботов
+└── examples/                    — Примеры ботов
 ```
 
 ## Лицензия
 
-Apache-2.0 license
+Apache-2.0
